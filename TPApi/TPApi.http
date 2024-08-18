@@ -1,0 +1,5 @@
+﻿@TPApi_HostAddress = https://localhost:7295
+
+GET {{TPApi_HostAddress}}/
+
+###
