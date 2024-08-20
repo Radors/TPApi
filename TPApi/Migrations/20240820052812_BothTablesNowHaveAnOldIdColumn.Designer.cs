@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPApi.Data;
 
@@ -10,9 +11,11 @@ using TPApi.Data;
 namespace TPApi.Migrations
 {
     [DbContext(typeof(TPDbContext))]
-    partial class TPDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240820052812_BothTablesNowHaveAnOldIdColumn")]
+    partial class BothTablesNowHaveAnOldIdColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

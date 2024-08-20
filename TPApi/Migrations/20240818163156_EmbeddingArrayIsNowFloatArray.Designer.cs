@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPApi.Data;
 
@@ -10,9 +11,11 @@ using TPApi.Data;
 namespace TPApi.Migrations
 {
     [DbContext(typeof(TPDbContext))]
-    partial class TPDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240818163156_EmbeddingArrayIsNowFloatArray")]
+    partial class EmbeddingArrayIsNowFloatArray
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -28,9 +31,6 @@ namespace TPApi.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("OldId")
-                        .HasColumnType("int");
 
                     b.Property<string>("Vector")
                         .IsRequired()
@@ -97,9 +97,6 @@ namespace TPApi.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("OldId")
-                        .HasColumnType("int");
 
                     b.Property<float>("Selen")
                         .HasColumnType("real");

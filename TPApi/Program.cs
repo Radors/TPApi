@@ -5,17 +5,23 @@ using TPApi.Food.Temporary;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<TPDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")));
-// builder.Services.AddSingleton<EmbeddingsInMemory>();
-// builder.Services.AddSingleton<ProductsInMemory>();
+/* Todo Next:
+builder.Services.AddSingleton<EmbeddingsInMemory>();
+builder.Services.AddSingleton<ProductsInMemory>();
+*/
 
-builder.Services.AddSingleton<UploadEmbeddings>();
+// builder.Services.AddSingleton<UploadData>();
 
 var app = builder.Build();
-// app.Services.GetRequiredService<EmbeddingsInMemory>();
-// app.Services.GetRequiredService<ProductsInMemory>();
+/* Todo Next:
+app.Services.GetRequiredService<EmbeddingsInMemory>();
+app.Services.GetRequiredService<ProductsInMemory>();
+*/
 
-var uploadEmbeddings = app.Services.GetRequiredService<UploadEmbeddings>();
-await uploadEmbeddings.ExcelToAzure();
+// var uploadData = app.Services.GetRequiredService<UploadData>();
+// await uploadEmbeddings.EmbeddingsFromExcelToAzure();
+// await uploadData.ProductsFromExcelToAzure();
+
 
 app.UseHttpsRedirection();
 if (!app.Environment.IsDevelopment())

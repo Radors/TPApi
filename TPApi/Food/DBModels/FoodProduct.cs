@@ -2,8 +2,9 @@
 {
     public class FoodProduct
     {
-        // Id originates from the second column of the raw data: "Livsmedelsnummer"
-        public required int Id { get; set; }
+        public int Id { get; set; }
+        // OldId originates from the second column of the raw data: "Livsmedelsnummer".
+        public required int OldId { get; set; }
         // Name originates from the first column of the raw data: "Livsmedelsnamn"
         public required string Name { get; set; }
         // Nutritional values are in whichever unit they have sufficiently few decimals to be convenient in, the same as in the raw data.
