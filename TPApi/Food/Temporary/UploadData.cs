@@ -132,7 +132,6 @@ namespace TPApi.Food.Temporary
                     context.FoodEmbeddings.Add(item);
                 }
                 context.SaveChanges();
-                
             }
             */
         }

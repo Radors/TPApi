@@ -11,8 +11,8 @@ using TPApi.Data;
 namespace TPApi.Migrations
 {
     [DbContext(typeof(TPDbContext))]
-    [Migration("20240820052812_BothTablesNowHaveAnOldIdColumn")]
-    partial class BothTablesNowHaveAnOldIdColumn
+    [Migration("20240821163052_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

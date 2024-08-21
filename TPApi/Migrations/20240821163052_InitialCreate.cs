@@ -16,6 +16,7 @@ namespace TPApi.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    OldId = table.Column<int>(type: "int", nullable: false),
                     Vector = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -29,24 +30,25 @@ namespace TPApi.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    OldId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Jod = table.Column<double>(type: "float", nullable: false),
-                    Jarn = table.Column<double>(type: "float", nullable: false),
-                    Kalcium = table.Column<double>(type: "float", nullable: false),
-                    Kalium = table.Column<double>(type: "float", nullable: false),
-                    Magnesium = table.Column<double>(type: "float", nullable: false),
-                    Selen = table.Column<double>(type: "float", nullable: false),
-                    Zink = table.Column<double>(type: "float", nullable: false),
-                    A = table.Column<double>(type: "float", nullable: false),
-                    B1 = table.Column<double>(type: "float", nullable: false),
-                    B2 = table.Column<double>(type: "float", nullable: false),
-                    B3 = table.Column<double>(type: "float", nullable: false),
-                    B6 = table.Column<double>(type: "float", nullable: false),
-                    B9 = table.Column<double>(type: "float", nullable: false),
-                    B12 = table.Column<double>(type: "float", nullable: false),
-                    C = table.Column<double>(type: "float", nullable: false),
-                    D = table.Column<double>(type: "float", nullable: false),
-                    E = table.Column<double>(type: "float", nullable: false)
+                    Jod = table.Column<float>(type: "real", nullable: false),
+                    Jarn = table.Column<float>(type: "real", nullable: false),
+                    Kalcium = table.Column<float>(type: "real", nullable: false),
+                    Kalium = table.Column<float>(type: "real", nullable: false),
+                    Magnesium = table.Column<float>(type: "real", nullable: false),
+                    Selen = table.Column<float>(type: "real", nullable: false),
+                    Zink = table.Column<float>(type: "real", nullable: false),
+                    A = table.Column<float>(type: "real", nullable: false),
+                    B1 = table.Column<float>(type: "real", nullable: false),
+                    B2 = table.Column<float>(type: "real", nullable: false),
+                    B3 = table.Column<float>(type: "real", nullable: false),
+                    B6 = table.Column<float>(type: "real", nullable: false),
+                    B9 = table.Column<float>(type: "real", nullable: false),
+                    B12 = table.Column<float>(type: "real", nullable: false),
+                    C = table.Column<float>(type: "real", nullable: false),
+                    D = table.Column<float>(type: "real", nullable: false),
+                    E = table.Column<float>(type: "real", nullable: false)
                 },
                 constraints: table =>
                 {

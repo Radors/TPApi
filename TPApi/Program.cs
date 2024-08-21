@@ -19,7 +19,7 @@ app.Services.GetRequiredService<ProductsInMemory>();
 */
 
 // var uploadData = app.Services.GetRequiredService<UploadData>();
-// await uploadEmbeddings.EmbeddingsFromExcelToAzure();
+// await uploadData.EmbeddingsFromExcelToAzure();
 // await uploadData.ProductsFromExcelToAzure();
 
 
