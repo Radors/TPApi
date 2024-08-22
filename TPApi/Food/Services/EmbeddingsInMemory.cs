@@ -1,17 +1,33 @@
-﻿using TPApi.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using TPApi.Data;
 using TPApi.Food.DBModels;
 
 namespace TPApi.Food.Services
 {
     public class EmbeddingsInMemory
     {
-        private readonly (int, float[])[] _vectors;
+        private FoodEmbedding[] _embeddings = Array.Empty<FoodEmbedding>();
+        private bool _isReady = false;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public EmbeddingsInMemory(TPDbContext context)
+        public EmbeddingsInMemory(IServiceScopeFactory scopeFactory)
         {
-            // Get the all items in the DbSet 'FoodEmbeddings' and save them into _vectors to have them ready in-memory as a singleton
+            _scopeFactory = scopeFactory;
+        }
 
-            // Implement logic to try again if the DB doesn't respond within a few seconds
+        public async Task LoadDataAsync()
+        {
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<TPDbContext>();
+                _embeddings = await context.FoodEmbeddings.ToArrayAsync();
+                _isReady = true;
+            }
+        }
+
+        public FoodEmbedding[]? TryGetEmbeddings()
+        {
+            return _isReady ? _embeddings : null;
         }
     }
 }

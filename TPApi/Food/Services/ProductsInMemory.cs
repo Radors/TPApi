@@ -1,17 +1,33 @@
 ﻿using TPApi.Data;
 using TPApi.Food.DBModels;
+using Microsoft.EntityFrameworkCore;
 
 namespace TPApi.Food.Services
 {
     public class ProductsInMemory
     {
-        private readonly (int, FoodProduct)[] _products;
+        private FoodProduct[] _products = Array.Empty<FoodProduct>();
+        private bool _isReady = false;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public ProductsInMemory(TPDbContext context)
+        public ProductsInMemory(IServiceScopeFactory scopeFactory)
         {
-            // Get the all items in the DbSet 'FoodProducts' and save them into _products to have them ready in-memory as a singleton
+            _scopeFactory = scopeFactory;
+        }
 
-            // Implement logic to try again if the DB doesn't respond within a few seconds
+        public async Task LoadDataAsync()
+        {
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<TPDbContext>();
+                _products = await context.FoodProducts.ToArrayAsync();
+                _isReady = true;
+            }
+        }
+
+        public FoodProduct[]? TryGetProducts()
+        {
+            return _isReady ? _products : null;
         }
     }
 }
