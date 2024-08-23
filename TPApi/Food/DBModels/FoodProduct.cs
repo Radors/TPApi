@@ -7,6 +7,8 @@
         public required int OldId { get; set; }
         // Name originates from the first column of the raw data: "Livsmedelsnamn"
         public required string Name { get; set; }
+        // Weight is the average (rounded up to 10 grams) of 3 successfully parsed GPT-approximations of a reasonable consumed weight for a person of average size.
+        public int Weight { get; set; }
         // Nutritional values are in whichever unit they have sufficiently few decimals to be convenient in, the same as in the raw data.
         public float Jod { get; set; }
         public float Jarn { get; set; }

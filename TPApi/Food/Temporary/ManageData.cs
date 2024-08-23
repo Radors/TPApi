@@ -1,6 +1,7 @@
 ﻿using ExcelDataReader;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OpenAI.Chat;
 using OpenAI.Embeddings;
 using System.Reflection.Metadata.Ecma335;
 using TPApi.Data;
@@ -8,16 +9,50 @@ using TPApi.Food.DBModels;
 
 namespace TPApi.Food.Temporary
 {
-    public class UploadData
+    public class ManageData
     {
         private readonly IServiceScopeFactory _scopeFactory;
 
-        public UploadData(IServiceScopeFactory scopeFactory)
+        public ManageData(IServiceScopeFactory scopeFactory)
         {
             _scopeFactory = scopeFactory;
         }
 
-        public async Task ProductsFromExcelToAzure()
+        public void WeightsFromGPTToAzure()
+        {
+            /*
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<TPDbContext>();
+                FoodProduct[] products = context.FoodProducts.ToArray();
+                foreach (var product in products)
+                {
+                    List<int> estimates = new();
+                    while (estimates.Count < 3)
+                    {
+                        ChatClient client = new(model: "gpt-4o", Environment.GetEnvironmentVariable("OPENAI_API_KEY")!);
+                        ChatCompletion estimation = client.CompleteChat($"Hur mycket är det rimligt att en person av genomsnittlig vikt konsumerar av matvaran skriven inuti citatet: \"{product.Name}\". Ditt svar ska vara den exakta vikten i antal gram. Formatet bör vara strikt numeriskt och inte innehålla något sammanhang eller förklaring.");
+                        if (Int32.TryParse(estimation.Content[0].Text, out int parsedEstimation))
+                        {
+                            estimates.Add(parsedEstimation);
+                        }
+                    }
+                    double averageEstimate = (estimates[0] + estimates[1] + estimates[2]) / 3;
+                    int roundedAverage;
+                    if (averageEstimate > 100)
+                    {
+                        roundedAverage = (int)Math.Round(averageEstimate / 50) * 50;
+                    }
+                    else roundedAverage = (int)Math.Round(averageEstimate / 10, 0, MidpointRounding.AwayFromZero) * 10;
+                    product.Weight = roundedAverage;
+                    context.SaveChanges();
+                    Console.WriteLine(product.Id);
+                }           
+            }
+            */
+        }
+
+        public void ProductsFromExcelToAzure()
         {
             /*
             using (var scope = _scopeFactory.CreateScope())
@@ -43,7 +78,7 @@ namespace TPApi.Food.Temporary
                                     counter++;
                                     continue;
                                 }
-                                FoodProduct item = new FoodProduct() { 
+                                FoodProduct item = new FoodProduct() {
                                     OldId = (int)reader.GetDouble(1),
                                     Name = reader.GetString(0),
                                     Jod = reader.IsDBNull(51) ? 0f : (float)reader.GetDouble(51),
@@ -79,7 +114,7 @@ namespace TPApi.Food.Temporary
             */
         }
         
-        public async Task EmbeddingsFromExcelToAzure()
+        public void EmbeddingsFromGPTToAzure()
         {
             /*
             using (var scope = _scopeFactory.CreateScope())
@@ -114,8 +149,8 @@ namespace TPApi.Food.Temporary
 
                 string[] itemNames = items.Select(e => e.Item2).ToArray();
 
-                EmbeddingCollection itemEmbeddings1 = await client.GenerateEmbeddingsAsync(new ArraySegment<string>(itemNames, 0, 2000));
-                EmbeddingCollection itemEmbeddings2 = await client.GenerateEmbeddingsAsync(new ArraySegment<string>(itemNames, 2000, itemNames.Length-2000));
+                EmbeddingCollection itemEmbeddings1 = client.GenerateEmbeddings(new ArraySegment<string>(itemNames, 0, 2000));
+                EmbeddingCollection itemEmbeddings2 = client.GenerateEmbeddings(new ArraySegment<string>(itemNames, 2000, itemNames.Length-2000));
 
                 float[][] itemEmbeddings3 = itemEmbeddings1.Concat(itemEmbeddings2).Select(e => e.Vector.ToArray()).ToArray();
 
