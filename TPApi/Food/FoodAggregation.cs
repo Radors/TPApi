@@ -1,16 +1,16 @@
 ﻿namespace TPApi.Food
 {
-    // Every instance of FoodAggregation represents one input row in the GUI.
+    // Each instance of FoodAggregation represents the response to one instance of FoodInput
     // The nutritional values of this element may be an aggregate of several FoodItems or just one, depending on search algorithm results.
     // When a request is received, one instance of FoodAggregation is created for each search term and at first, only Id, Name and Weight are populated.
     public class FoodAggregation
     {
         // An arbitrary unique Id that is only utilized by the frontend.
-        public required int Id { get; set; }
+        public int FrontendId { get; set; }
         // Original input Name just carried along (not the name of any matched item!)
-        public required string Name { get; set; }
-        // Weight may be zero after instatiation if no custom weight was received. Zero indicates to include this FoodAggregation in the LLM request.
-        public required int Weight { get; set; }
+        public string Name { get; set; }
+        // Weight may be zero after instatiation if no custom weight was received. Zero indicates to include this FoodAggregation in the request for embeddings.
+        public int Weight { get; set; }
         // All aggregations of nutritional values will be ready to use: They will already be multiplied with the weight and rounded to two decimals.
         public float Jod { get; set; }
         public float Jarn { get; set; }
@@ -29,5 +29,12 @@
         public float C { get; set; }
         public float D { get; set; }
         public float E { get; set; }
+
+        public FoodAggregation(int frontendId, string name, int weight)
+        {
+            FrontendId = frontendId;
+            Name = name;
+            Weight = weight;
+        }
     }
 }
