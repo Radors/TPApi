@@ -10,20 +10,29 @@ namespace TPApi.Food
 
         public static async Task<float[][]> GetEmbeddingsAsync(FoodInput[] foodInputs)
         {
-            List<FoodAggregation> foodAggregations = new();
-            foreach (var foodInput in foodInputs)
+            string[] names = foodInputs.Select(e => e.Name).ToArray();
+
+            var tasks = new[]
             {
-                var newAggregation = new FoodAggregation(foodInput.FrontendId, foodInput.Name, foodInput.Weight);
-                foodAggregations.Add(newAggregation);
-            }
+                GenerateEmbeddingsWithDelay(names, 0),
+                GenerateEmbeddingsWithDelay(names, 45),
+                GenerateEmbeddingsWithDelay(names, 95),
+                GenerateEmbeddingsWithDelay(names, 150)
+            };
+            var firstResponse = await Task.WhenAny(tasks);
+            EmbeddingCollection newEmbeddings = await firstResponse;
 
-            EmbeddingClient client = new("text-embedding-3-large", Environment.GetEnvironmentVariable("OPENAI_API_KEY")!);
-            EmbeddingCollection newEmbeddings = await client.GenerateEmbeddingsAsync(foodAggregations.Select(e => e.Name).ToArray());
             float[][] vectors = newEmbeddings.Select(e => e.Vector.ToArray()).ToArray();
-
             return vectors;
         }
-        
+
+        public static async Task<EmbeddingCollection> GenerateEmbeddingsWithDelay(string[] names, int delay)
+        {
+            if (delay > 0) await Task.Delay(delay);
+            EmbeddingClient client = new("text-embedding-3-large", Environment.GetEnvironmentVariable("OPENAI_API_KEY")!);
+            return await client.GenerateEmbeddingsAsync(names);
+        }
+
         public static FoodAggregation[] GetAggregations(FoodInput[] foodInputs, float[][] newEmbeddings, 
                                                         FoodEmbedding[] storedEmbeddings, FoodProduct[] storedProducts)
         {
