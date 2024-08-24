@@ -7,11 +7,12 @@
     {
         // An arbitrary unique Id that is only utilized by the frontend.
         public int FrontendId { get; set; }
-        // Original input Name just carried along (not the name of any matched item!)
+        // Original input Name just carried along ( not the name of any actually matched item(s) )
         public string Name { get; set; }
         // Weight may be zero after instatiation if no custom weight was received. Zero indicates to include this FoodAggregation in the request for embeddings.
         public int Weight { get; set; }
-        // All aggregations of nutritional values will be ready to use: They will already be multiplied with the weight and rounded to two decimals.
+        // All aggregations of nutritional values will be percentages in decimal form which are ready to use: 
+        // They will already be multiplied with the weight and rounded to two decimals.
         public float Jod { get; set; }
         public float Jarn { get; set; }
         public float Kalcium { get; set; }

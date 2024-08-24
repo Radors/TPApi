@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using OpenAI.Embeddings;
 using TPApi.Data;
 using TPApi.Food;
 using TPApi.Food.DBModels;
@@ -22,29 +21,17 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.MapPost("/food/processinput", async (FoodInput[] foodInputs, TPDbContext context) => {
+app.MapPost("/food/processinput", async (FoodInput[] foodInputs) => {
     if (foodInputs.Length == 0) return Results.BadRequest();
 
-    List<FoodAggregation> foodAggregations = new();
-    foreach (var foodInput in foodInputs)
-    {
-        var newAggregation = new FoodAggregation(foodInput.FrontendId, foodInput.Name, foodInput.Weight);
-        foodAggregations.Add(newAggregation);
-    }
+    float[][] newEmbeddings = await InputProcessor.GetEmbeddingsAsync(foodInputs);
 
-    EmbeddingClient client = new("text-embedding-3-large", Environment.GetEnvironmentVariable("OPENAI_API_KEY")!);
-    EmbeddingCollection newEmbeddings = await client.GenerateEmbeddingsAsync(foodAggregations.Select(e => e.Name).ToArray());
-    float[][] arrayOfVectors = newEmbeddings.Select(e => e.Vector.ToArray()).ToArray();
-
-    if (embeddingsInMemory.TryGetEmbeddings() is FoodEmbedding[] storedEmbeddings)
+    if (embeddingsInMemory.TryGetEmbeddings() is FoodEmbedding[] storedEmbeddings &&
+        productsInMemory.TryGetProducts() is FoodProduct[] storedProducts)
     {
-        foreach (var newVector in arrayOfVectors)
-        {
-            // Continue here
-        }
+        FoodAggregation[] aggregations = InputProcessor.GetAggregations(foodInputs, newEmbeddings, storedEmbeddings, storedProducts);
+        return Results.Ok(aggregations);
     }
     else return Results.StatusCode(503);
-
-    return Results.Ok(); // Temporary
 });
 app.Run();
