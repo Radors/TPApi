@@ -1,5 +1,4 @@
 ﻿using OpenAI.Embeddings;
-using TPApi.Data;
 using TPApi.Food.DBModels;
 
 namespace TPApi.Food
@@ -39,10 +38,11 @@ namespace TPApi.Food
             for (int i = 0; i < aggregations.Length; i++)
             {
                 (int, float)[] similarities = new (int, float)[storedProducts.Length];
-                foreach (var storedEmbedding in storedEmbeddings)
+
+                for (int j = 0; j < storedEmbeddings.Length; j++)
                 {
-                    float similarity = ComputeDotProduct(newEmbeddings[i], storedEmbedding.Vector);
-                    similarities[i] = (storedEmbedding.Id, similarity);
+                    float similarity = ComputeDotProduct(newEmbeddings[i], storedEmbeddings[j].Vector);
+                    similarities[j] = (storedEmbeddings[j].Id, similarity);
                 }
 
                 (int, float)[] topSimilarities = similarities.OrderByDescending(e => e.Item2).Take(maxProductsPerAggregation).ToArray();
@@ -52,28 +52,31 @@ namespace TPApi.Food
                 {
                     var product = storedProducts.Single(e => e.Id == id);
                     int numberOfProducts = chosenProductIds.Length;
-                    int weightFactor = aggregations[i].Weight > 0 ? aggregations[i].Weight/100 : product.Weight/100;
-                    aggregations[i].Jod += product.Jod / numberOfProducts * weightFactor;
-                    aggregations[i].Jarn += product.Jarn / numberOfProducts * weightFactor;
-                    aggregations[i].Kalcium += product.Kalcium / numberOfProducts * weightFactor;
-                    aggregations[i].Kalium += product.Kalium / numberOfProducts * weightFactor;
-                    aggregations[i].Magnesium += product.Magnesium / numberOfProducts * weightFactor;
-                    aggregations[i].Selen += product.Selen / numberOfProducts * weightFactor;
-                    aggregations[i].Zink += product.Zink / numberOfProducts * weightFactor;
-                    aggregations[i].A += product.A / numberOfProducts * weightFactor;
-                    aggregations[i].B1 += product.B1 / numberOfProducts * weightFactor;
-                    aggregations[i].B2 += product.B2 / numberOfProducts * weightFactor;
-                    aggregations[i].B3 += product.B3 / numberOfProducts * weightFactor;
-                    aggregations[i].B6 += product.B6 / numberOfProducts * weightFactor;
-                    aggregations[i].B9 += product.B9 / numberOfProducts * weightFactor;
-                    aggregations[i].B12 += product.B12 / numberOfProducts * weightFactor;
-                    aggregations[i].C += product.C / numberOfProducts * weightFactor;
-                    aggregations[i].D += product.D / numberOfProducts * weightFactor;
-                    aggregations[i].E += product.E / numberOfProducts * weightFactor;
+                    float weightFactor = aggregations[i].Weight > 0 ? aggregations[i].Weight/100f : product.Weight/100f;
+                    if (aggregations[i].Weight == 0) aggregations[i].Weight = product.Weight;
+                    aggregations[i].Jod += product.Jod / numberOfProducts * weightFactor / RecDailyIntake.Jod;
+                    aggregations[i].Jarn += product.Jarn / numberOfProducts * weightFactor / RecDailyIntake.Jarn;
+                    aggregations[i].Kalcium += product.Kalcium / numberOfProducts * weightFactor / RecDailyIntake.Kalcium;
+                    aggregations[i].Kalium += product.Kalium / numberOfProducts * weightFactor / RecDailyIntake.Kalium;
+                    aggregations[i].Magnesium += product.Magnesium / numberOfProducts * weightFactor / RecDailyIntake.Magnesium;
+                    aggregations[i].Selen += product.Selen / numberOfProducts * weightFactor / RecDailyIntake.Selen;
+                    aggregations[i].Zink += product.Zink / numberOfProducts * weightFactor / RecDailyIntake.Zink;
+                    aggregations[i].A += product.A / numberOfProducts * weightFactor / RecDailyIntake.A;
+                    aggregations[i].B1 += product.B1 / numberOfProducts * weightFactor / RecDailyIntake.B1;
+                    aggregations[i].B2 += product.B2 / numberOfProducts * weightFactor / RecDailyIntake.B2;
+                    aggregations[i].B3 += product.B3 / numberOfProducts * weightFactor / RecDailyIntake.B3;
+                    aggregations[i].B6 += product.B6 / numberOfProducts * weightFactor / RecDailyIntake.B6;
+                    aggregations[i].B9 += product.B9 / numberOfProducts * weightFactor / RecDailyIntake.B9;
+                    aggregations[i].B12 += product.B12 / numberOfProducts * weightFactor / RecDailyIntake.B12;
+                    aggregations[i].C += product.C / numberOfProducts * weightFactor / RecDailyIntake.C;
+                    aggregations[i].D += product.D / numberOfProducts * weightFactor / RecDailyIntake.D;
+                    aggregations[i].E += product.E / numberOfProducts * weightFactor / RecDailyIntake.E;
                 }
             }
             return aggregations;
         }
+
+
 
         public static float ComputeDotProduct(float[] vectorA, float[] vectorB)
         {

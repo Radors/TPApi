@@ -10,10 +10,10 @@ builder.Services.AddSingleton<EmbeddingsInMemory>();
 builder.Services.AddSingleton<ProductsInMemory>();
 var app = builder.Build();
 
-var embeddingsInMemory = app.Services.GetRequiredService<EmbeddingsInMemory>();
 var productsInMemory = app.Services.GetRequiredService<ProductsInMemory>();
-await embeddingsInMemory.LoadDataAsync();
-await productsInMemory.LoadDataAsync();
+var embeddingsInMemory = app.Services.GetRequiredService<EmbeddingsInMemory>();
+await productsInMemory.LoadDataAsync(); // Implement logic inside the singleton to retry if connection takes a bunch of seconds (indicating the db was cold)
+await embeddingsInMemory.LoadDataAsync(); // Since this is after above, db should be warm now, but still: Implement logic inside the singleton to retry if connection takes a bunch of seconds (indicating the db was cold)
 
 app.UseHttpsRedirection();
 if (!app.Environment.IsDevelopment())
@@ -22,7 +22,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.MapPost("/food/processinput", async (FoodInput[] foodInputs) => {
-    if (foodInputs.Length == 0) return Results.BadRequest();
+    if (foodInputs is null || foodInputs.Length == 0) return Results.BadRequest();
 
     float[][] newEmbeddings = await InputProcessor.GetEmbeddingsAsync(foodInputs);
 
@@ -32,6 +32,6 @@ app.MapPost("/food/processinput", async (FoodInput[] foodInputs) => {
         FoodAggregation[] aggregations = InputProcessor.GetAggregations(foodInputs, newEmbeddings, storedEmbeddings, storedProducts);
         return Results.Ok(aggregations);
     }
-    else return Results.StatusCode(503);
+    return Results.StatusCode(503);
 });
 app.Run();

@@ -16,7 +16,7 @@ Content-Type: application/json
     },
     {
         "frontendId": 3,
-        "name": "Bearnaisesås",
-        "weight": 50
+        "name": "basilika",
+        "weight": 0
     }
 ]
