@@ -12,8 +12,8 @@ var app = builder.Build();
 
 var productsInMemory = app.Services.GetRequiredService<ProductsInMemory>();
 var embeddingsInMemory = app.Services.GetRequiredService<EmbeddingsInMemory>();
-await productsInMemory.LoadDataAsync(); // Implement logic inside the singleton to retry if connection takes a bunch of seconds (indicating the db was cold)
-await embeddingsInMemory.LoadDataAsync(); // Since this is after above, db should be warm now, but still: Implement logic inside the singleton to retry if connection takes a bunch of seconds (indicating the db was cold)
+await productsInMemory.LoadDataAsync();
+await embeddingsInMemory.LoadDataAsync();
 
 app.UseHttpsRedirection();
 if (!app.Environment.IsDevelopment())

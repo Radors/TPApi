@@ -1,6 +1,9 @@
-﻿using TPApi.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using Polly.Retry;
+using Polly;
+using System.Diagnostics;
+using TPApi.Data;
 using TPApi.Food.DBModels;
-using Microsoft.EntityFrameworkCore;
 
 namespace TPApi.Food.Services
 {
@@ -9,20 +12,37 @@ namespace TPApi.Food.Services
         private FoodProduct[] _products = Array.Empty<FoodProduct>();
         private bool _isReady = false;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ILogger<ProductsInMemory> _logger;
 
-        public ProductsInMemory(IServiceScopeFactory scopeFactory)
+        public ProductsInMemory(IServiceScopeFactory scopeFactory, ILogger<ProductsInMemory> logger)
         {
             _scopeFactory = scopeFactory;
+            _logger = logger;
         }
 
         public async Task LoadDataAsync()
         {
+            var stopwatch = Stopwatch.StartNew();
             using (var scope = _scopeFactory.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<TPDbContext>();
-                _products = await context.FoodProducts.ToArrayAsync();
-                _isReady = true;
+
+                ResiliencePipeline pipeline = new ResiliencePipelineBuilder()
+                    .AddRetry(new RetryStrategyOptions()
+                    {
+                        MaxRetryAttempts = 2,
+                    })
+                    .AddTimeout(TimeSpan.FromSeconds(3))
+                    .Build();
+
+                await pipeline.ExecuteAsync(async token =>
+                {
+                    _products = await context.FoodProducts.ToArrayAsync(token);
+                    _isReady = true;
+                }, CancellationToken.None);
             }
+            stopwatch.Stop();
+            _logger.LogInformation("ProductsInMemory.LoadDataAsync took {duration} ms", stopwatch.ElapsedMilliseconds);
         }
 
         public FoodProduct[]? TryGetProducts()
