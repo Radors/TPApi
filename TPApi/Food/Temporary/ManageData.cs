@@ -1,5 +1,4 @@
-﻿using ExcelDataReader;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OpenAI.Chat;
 using OpenAI.Embeddings;
