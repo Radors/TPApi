@@ -1,5 +1,4 @@
 ﻿using OpenAI.Embeddings;
-using System.Diagnostics;
 using System.Numerics;
 using TPApi.Food.DBModels;
 
@@ -96,8 +95,6 @@ namespace TPApi.Food
             }
             return aggregations;
         }
-
-
 
         public static float ComputeDotProduct(float[] vectorA, float[] vectorB)
         {
