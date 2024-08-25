@@ -5,18 +5,18 @@ POST {{TPApi_HostAddress}}/food/processinput
 Content-Type: application/json
 [
     {
-        "frontendId": 1,
-        "name": "Potatis",
+        "frontendId": 0,
+        "name": "pizza",
         "weight": 250
     },
     {
-        "frontendId": 2,
-        "name": "Nötkött",
-        "weight": 150
+        "frontendId": -4,
+        "name": "kvarg låg fetthalt",
+        "weight": -50
     },
     {
-        "frontendId": 3,
-        "name": "basilika",
+        "frontendId": -124,
+        "name": "filmjölk tre procent",
         "weight": 0
     }
 ]

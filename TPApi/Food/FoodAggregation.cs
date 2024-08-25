@@ -11,6 +11,8 @@
         public string Name { get; set; }
         // Weight may be zero after instatiation if no custom weight was received. Zero indicates to include this FoodAggregation in the request for embeddings.
         public int Weight { get; set; }
+        // Rejected is set to true if highest similarity is below 0.3
+        public bool Rejected { get; set; } = false;
         // All aggregations of nutritional values will be percentages in decimal form.
         // They will already be multiplied with the weight, but they will not be rounded
         public float Jod { get; set; }

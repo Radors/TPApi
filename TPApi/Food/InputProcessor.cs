@@ -55,6 +55,11 @@ namespace TPApi.Food
                 }
 
                 (int, float)[] topSimilarities = similarities.OrderByDescending(e => e.Item2).Take(maxProductsPerAggregation).ToArray();
+                if (topSimilarities[0].Item2 < 0.4f)
+                {
+                    aggregations[i].Rejected = true;
+                    continue;
+                }
                 int[] chosenProductIds = topSimilarities.Where(e => Math.Abs(e.Item2 - topSimilarities[0].Item2) < maxSimilarityDistance).Select(e => e.Item1).ToArray();
 
                 foreach (var id in chosenProductIds)
@@ -62,7 +67,7 @@ namespace TPApi.Food
                     var product = storedProducts.Single(e => e.Id == id);
                     int numberOfProducts = chosenProductIds.Length;
                     float weightFactor = aggregations[i].Weight > 0 ? aggregations[i].Weight/100f : product.Weight/100f;
-                    if (aggregations[i].Weight == 0) aggregations[i].Weight = product.Weight;
+                    if (aggregations[i].Weight < 1) aggregations[i].Weight = product.Weight;
                     aggregations[i].Jod += product.Jod / numberOfProducts * weightFactor / RecDailyIntake.Jod;
                     aggregations[i].Jarn += product.Jarn / numberOfProducts * weightFactor / RecDailyIntake.Jarn;
                     aggregations[i].Kalcium += product.Kalcium / numberOfProducts * weightFactor / RecDailyIntake.Kalcium;

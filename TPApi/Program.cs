@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using TPApi.Data;
 using TPApi.Food;
 using TPApi.Food.DBModels;
@@ -22,7 +23,11 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.MapPost("/food/processinput", async (FoodInput[] foodInputs) => {
-    if (foodInputs is null || foodInputs.Length == 0) return Results.BadRequest();
+    if (foodInputs.Length == 0) return Results.BadRequest();
+    foreach (var input in foodInputs)
+    {
+        if (string.IsNullOrEmpty(input.Name)) return Results.BadRequest();
+    }
 
     float[][] newEmbeddings = await InputProcessor.GetEmbeddingsAsync(foodInputs);
 
