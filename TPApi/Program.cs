@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Diagnostics;
 using TPApi.Data;
 using TPApi.Food;
 using TPApi.Food.DBModels;
@@ -29,7 +30,9 @@ app.MapPost("/food/processinput", async (FoodInput[] foodInputs) => {
         if (string.IsNullOrEmpty(input.Name)) return Results.BadRequest();
     }
 
+    var stopwatch = Stopwatch.StartNew();
     float[][] newEmbeddings = await InputProcessor.GetEmbeddingsAsync(foodInputs);
+    Console.WriteLine("Time total: " + stopwatch.ElapsedMilliseconds + " ms");
 
     if (embeddingsInMemory.TryGetEmbeddings() is FoodEmbedding[] storedEmbeddings &&
         productsInMemory.TryGetProducts() is FoodProduct[] storedProducts)

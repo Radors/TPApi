@@ -30,7 +30,7 @@ namespace TPApi.Food.Services
                 ResiliencePipeline pipeline = new ResiliencePipelineBuilder()
                     .AddRetry(new RetryStrategyOptions()
                     {
-                        MaxRetryAttempts = 2,
+                        MaxRetryAttempts = 3,
                     })
                     .AddTimeout(TimeSpan.FromSeconds(3))
                     .Build();
@@ -38,7 +38,7 @@ namespace TPApi.Food.Services
                 await pipeline.ExecuteAsync(async token =>
                 {
                     _products = await context.FoodProducts.ToArrayAsync(token);
-                    _isReady = true;
+                    if (_products != Array.Empty<FoodProduct>()) _isReady = true;
                 }, CancellationToken.None);
             }
             stopwatch.Stop();

@@ -1,4 +1,6 @@
 ﻿using OpenAI.Embeddings;
+using System.Diagnostics;
+using System.Numerics;
 using TPApi.Food.DBModels;
 
 namespace TPApi.Food
@@ -12,25 +14,30 @@ namespace TPApi.Food
         {
             string[] names = foodInputs.Select(e => e.Name).ToArray();
 
+            using var cts = new CancellationTokenSource();
+            var token = cts.Token;
             var tasks = new[]
             {
-                GenerateEmbeddingsWithDelay(names, 0),
-                GenerateEmbeddingsWithDelay(names, 45),
-                GenerateEmbeddingsWithDelay(names, 95),
-                GenerateEmbeddingsWithDelay(names, 150)
+                GenerateEmbeddingsWithDelay(names, 0, token),
+                GenerateEmbeddingsWithDelay(names, 45, token),
+                GenerateEmbeddingsWithDelay(names, 95, token),
+                GenerateEmbeddingsWithDelay(names, 150, token)
             };
             var firstResponse = await Task.WhenAny(tasks);
+            cts.Cancel();
+
             EmbeddingCollection newEmbeddings = await firstResponse;
 
             float[][] vectors = newEmbeddings.Select(e => e.Vector.ToArray()).ToArray();
             return vectors;
         }
 
-        public static async Task<EmbeddingCollection> GenerateEmbeddingsWithDelay(string[] names, int delay)
+        public static async Task<EmbeddingCollection> GenerateEmbeddingsWithDelay(string[] names, int delay, CancellationToken token)
         {
             if (delay > 0) await Task.Delay(delay);
+
             EmbeddingClient client = new("text-embedding-3-large", Environment.GetEnvironmentVariable("OPENAI_API_KEY")!);
-            return await client.GenerateEmbeddingsAsync(names);
+            return await client.GenerateEmbeddingsAsync(names, null, token);
         }
 
         public static FoodAggregation[] GetAggregations(FoodInput[] foodInputs, float[][] newEmbeddings, 
@@ -94,12 +101,21 @@ namespace TPApi.Food
 
         public static float ComputeDotProduct(float[] vectorA, float[] vectorB)
         {
-            float dotProduct = 0;
-            for (int i = 0; i < vectorA.Length; i++)
+            float sum = 0;
+            int length = vectorA.Length;
+            int simdLength = Vector<float>.Count;
+            int i = 0;
+            for (; i <= length - simdLength; i += simdLength)
             {
-                dotProduct += vectorA[i] * vectorB[i];
+                var v1 = new Vector<float>(vectorA, i);
+                var v2 = new Vector<float>(vectorB, i);
+                sum += Vector.Dot(v1, v2);
             }
-            return dotProduct;
+            for (; i < length; i++)
+            {
+                sum += vectorA[i] * vectorB[i];
+            }
+            return sum;
         }
     }
 }
