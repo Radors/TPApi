@@ -43,30 +43,5 @@ Content-Type: application/json
         "frontendId": -124,
         "name": "falafel",
         "weight": 0
-    },
-    {
-        "frontendId": -124,
-        "name": "ärtor",
-        "weight": 0
-    },
-    {
-        "frontendId": -124,
-        "name": "ljust bröd",
-        "weight": 0
-    },
-    {
-        "frontendId": -124,
-        "name": "bregott",
-        "weight": 0
-    },
-    {
-        "frontendId": -124,
-        "name": "ost",
-        "weight": 0
-    },
-    {
-        "frontendId": -124,
-        "name": "proteinpulver",
-        "weight": 0
     }
 ]

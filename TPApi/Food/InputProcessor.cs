@@ -1,15 +1,49 @@
-﻿using OpenAI.Embeddings;
+﻿using Azure.Security.KeyVault.Secrets;
+using Microsoft.AspNetCore.DataProtection;
+using OpenAI.Embeddings;
+using Polly.Retry;
+using Polly;
+using System.Diagnostics;
 using System.Numerics;
 using TPApi.Food.DBModels;
 
 namespace TPApi.Food
 {
-    public static class InputProcessor
+    public class InputProcessor
     {
-        private readonly static float maxSimilarityDistance = 0.1f;
-        private readonly static int maxProductsPerAggregation = 5;
+        private readonly float _maxSimilarityDistance = 0.1f;
+        private readonly int _maxProductsPerAggregation = 5;
+        private readonly string _key;
 
-        public static async Task<float[][]> GetEmbeddingsAsync(FoodInput[] foodInputs)
+        public InputProcessor(SecretClient secretClient)
+        {
+            ResiliencePipeline pipeline = new ResiliencePipelineBuilder()
+                    .AddRetry(new RetryStrategyOptions()
+                    {
+                        MaxRetryAttempts = 3,
+                    })
+                    .AddTimeout(TimeSpan.FromSeconds(3))
+                    .Build();
+
+            string key = string.Empty;
+
+            pipeline.Execute(token =>
+            {
+                var secret = secretClient.GetSecret("openai-api-key", null, token);
+                if (secret is not null) 
+                {
+                    key = secret.Value.Value;
+                }
+            }, CancellationToken.None);
+
+            if (string.IsNullOrEmpty(key))
+            {
+                throw new InvalidOperationException("Failed to retrieve key");
+            }
+            _key = key;
+        }
+
+        public async Task<float[][]> GetEmbeddingsAsync(FoodInput[] foodInputs)
         {
             string[] names = foodInputs.Select(e => e.Name).ToArray();
 
@@ -31,15 +65,15 @@ namespace TPApi.Food
             return vectors;
         }
 
-        public static async Task<EmbeddingCollection> GenerateEmbeddingsWithDelay(string[] names, int delay, CancellationToken token)
+        private async Task<EmbeddingCollection> GenerateEmbeddingsWithDelay(string[] names, int delay, CancellationToken token)
         {
             if (delay > 0) await Task.Delay(delay);
 
-            EmbeddingClient client = new("text-embedding-3-large", Environment.GetEnvironmentVariable("OPENAI_API_KEY")!);
+            EmbeddingClient client = new("text-embedding-3-large", _key);
             return await client.GenerateEmbeddingsAsync(names, null, token);
-        }
+            }
 
-        public static FoodAggregation[] GetAggregations(FoodInput[] foodInputs, float[][] newEmbeddings, 
+        public FoodAggregation[] GetAggregations(FoodInput[] foodInputs, float[][] newEmbeddings, 
                                                         FoodEmbedding[] storedEmbeddings, FoodProduct[] storedProducts)
         {
             FoodAggregation[] aggregations = new FoodAggregation[foodInputs.Length];
@@ -60,13 +94,13 @@ namespace TPApi.Food
                     similarities[j] = (storedEmbeddings[j].Id, similarity);
                 }
 
-                (int, float)[] topSimilarities = similarities.OrderByDescending(e => e.Item2).Take(maxProductsPerAggregation).ToArray();
+                (int, float)[] topSimilarities = similarities.OrderByDescending(e => e.Item2).Take(_maxProductsPerAggregation).ToArray();
                 if (topSimilarities[0].Item2 < 0.4f)
                 {
                     aggregations[i].Rejected = true;
                     continue;
                 }
-                int[] chosenProductIds = topSimilarities.Where(e => Math.Abs(e.Item2 - topSimilarities[0].Item2) < maxSimilarityDistance).Select(e => e.Item1).ToArray();
+                int[] chosenProductIds = topSimilarities.Where(e => Math.Abs(e.Item2 - topSimilarities[0].Item2) < _maxSimilarityDistance).Select(e => e.Item1).ToArray();
 
                 foreach (var id in chosenProductIds)
                 {
@@ -96,7 +130,7 @@ namespace TPApi.Food
             return aggregations;
         }
 
-        public static float ComputeDotProduct(float[] vectorA, float[] vectorB)
+        private float ComputeDotProduct(float[] vectorA, float[] vectorB)
         {
             float sum = 0;
             int length = vectorA.Length;
