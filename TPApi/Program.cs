@@ -8,12 +8,13 @@ using TPApi.Food.DBModels;
 using TPApi.Food.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<TPDbContext>(options => options.UseSqlServer(builder.Configuration["AZURE_SQL_CONNECTIONSTRING"]));
+string azureSqlConnectionString = builder.Environment.IsDevelopment() ? builder.Configuration["AZURE_SQL_CONNECTIONSTRING"]! : builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")!;
+builder.Services.AddDbContext<TPDbContext>(options => options.UseSqlServer(azureSqlConnectionString));
 builder.Services.AddSingleton<EmbeddingsInMemory>();
 builder.Services.AddSingleton<ProductsInMemory>();
+string vaultUrl = builder.Environment.IsDevelopment() ? builder.Configuration["vaultUrl"]! : builder.Configuration.GetConnectionString("vaultUrl")!;
 builder.Services.AddSingleton(e =>
 {
-    var vaultUrl = builder.Configuration["vaultUrl"]!;
     return new SecretClient(vaultUri: new Uri(vaultUrl), credential: new DefaultAzureCredential());
 });
 builder.Services.AddSingleton<InputProcessor>();
