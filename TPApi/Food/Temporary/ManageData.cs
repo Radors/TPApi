@@ -58,7 +58,6 @@ namespace TPApi.Food.Temporary
             {
                 var context = scope.ServiceProvider.GetRequiredService<TPDbContext>();
 
-                EmbeddingClient client = new("text-embedding-3-large", Environment.GetEnvironmentVariable("OPENAI_API_KEY")!);
                 System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
                 List<FoodProduct> items = new();

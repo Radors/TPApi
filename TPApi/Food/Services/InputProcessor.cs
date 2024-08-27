@@ -1,9 +1,7 @@
 ﻿using Azure.Security.KeyVault.Secrets;
-using Microsoft.AspNetCore.DataProtection;
 using OpenAI.Embeddings;
 using Polly.Retry;
 using Polly;
-using System.Diagnostics;
 using System.Numerics;
 using TPApi.Food.DBModels;
 
