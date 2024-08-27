@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace TPApi.Food
+namespace TPApi.Food.APIModels
 {
     public class FoodInput
     {

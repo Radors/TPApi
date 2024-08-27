@@ -3,11 +3,12 @@ using Azure.Security.KeyVault.Secrets;
 using Microsoft.EntityFrameworkCore;
 using TPApi.Data;
 using TPApi.Food;
+using TPApi.Food.APIModels;
 using TPApi.Food.DBModels;
 using TPApi.Food.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<TPDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")));
+builder.Services.AddDbContext<TPDbContext>(options => options.UseSqlServer(builder.Configuration["AZURE_SQL_CONNECTIONSTRING"]));
 builder.Services.AddSingleton<EmbeddingsInMemory>();
 builder.Services.AddSingleton<ProductsInMemory>();
 builder.Services.AddSingleton(e =>
