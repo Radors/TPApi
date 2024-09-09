@@ -8,11 +8,11 @@ using TPApi.Food.DBModels;
 using TPApi.Food.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-string azureSqlConnectionString = builder.Environment.IsDevelopment() ? builder.Configuration["AZURE_SQL_CONNECTIONSTRING"]! : builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")!;
+string azureSqlConnectionString = builder.Configuration["AZURE_SQL_CONNECTIONSTRING"] ?? throw new InvalidOperationException("Azure SQL connectionstring not found");
 builder.Services.AddDbContext<TPDbContext>(options => options.UseSqlServer(azureSqlConnectionString));
 builder.Services.AddSingleton<EmbeddingsInMemory>();
 builder.Services.AddSingleton<ProductsInMemory>();
-string vaultUrl = builder.Environment.IsDevelopment() ? builder.Configuration["vaultUrl"]! : builder.Configuration.GetConnectionString("vaultUrl")!;
+string vaultUrl = builder.Configuration["vaultUrl"] ?? throw new InvalidOperationException("Vault URL not found");
 builder.Services.AddSingleton(e =>
 {
     return new SecretClient(vaultUri: new Uri(vaultUrl), credential: new DefaultAzureCredential());
@@ -24,7 +24,7 @@ var inputProcessor = app.Services.GetRequiredService<InputProcessor>();
 var productsInMemory = app.Services.GetRequiredService<ProductsInMemory>();
 var embeddingsInMemory = app.Services.GetRequiredService<EmbeddingsInMemory>();
 await productsInMemory.LoadDataAsync();
-await embeddingsInMemory.LoadDataAsync();
+await embeddingsInMemory.LoadDataAsync(); 
 
 app.UseHttpsRedirection();
 if (!app.Environment.IsDevelopment())

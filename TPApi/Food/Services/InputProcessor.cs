@@ -5,6 +5,8 @@ using Polly;
 using System.Numerics;
 using TPApi.Food.DBModels;
 using TPApi.Food.APIModels;
+using System.Reflection.Metadata.Ecma335;
+using System.Diagnostics;
 
 namespace TPApi.Food
 {
@@ -56,7 +58,7 @@ namespace TPApi.Food
                 GenerateEmbeddingsWithDelay(names, 150, token)
             };
             var firstResponse = await Task.WhenAny(tasks);
-            cts.Cancel();
+            // cts.Cancel();
 
             EmbeddingCollection newEmbeddings = await firstResponse;
 
@@ -67,10 +69,14 @@ namespace TPApi.Food
         private async Task<EmbeddingCollection> GenerateEmbeddingsWithDelay(string[] names, int delay, CancellationToken token)
         {
             if (delay > 0) await Task.Delay(delay);
-
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             EmbeddingClient client = new("text-embedding-3-large", _key);
-            return await client.GenerateEmbeddingsAsync(names, null, token);
-            }
+            var results = await client.GenerateEmbeddingsAsync(names, null, token);
+            stopwatch.Stop();
+            Console.WriteLine(stopwatch.ElapsedMilliseconds);
+            return results;
+        }
 
         public FoodAggregation[] GetAggregations(FoodInput[] foodInputs, float[][] newEmbeddings, 
                                                         FoodEmbedding[] storedEmbeddings, FoodProduct[] storedProducts)
