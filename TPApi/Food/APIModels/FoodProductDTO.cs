@@ -1,20 +1,16 @@
 ﻿namespace TPApi.Food.APIModels
 {
-    // Each instance of FoodAggregation represents the response to one instance of FoodInput
-    // The nutritional values of this element may be an aggregate of several FoodItems or just one, depending on search algorithm results.
-    // When a request is received, one instance of FoodAggregation is created for each search term and at first, only FrontendId, Name and Weight are populated.
-    public class FoodAggregation
+    // Each instance of FoodProductDTO represents the response to one instance of FoodInput
+    // When a request is received, one instance of FoodProductDTO is created for each search term and at first, only .FrontendId and .Name are populated.
+    public class FoodProductDTO
     {
         // An Id that is only utilized by the frontend.
         public int FrontendId { get; set; }
-        // Original input Name just carried along ( not the name of any particular matched item(s) )
+        // Original input Name
         public string Name { get; set; }
-        // Weight may be zero after instatiation if no custom weight was received. Zero indicates to include this FoodAggregation in the request for embeddings.
-        public int Weight { get; set; }
         // Rejected is set to true if highest similarity is below 0.4
         public bool Rejected { get; set; } = false;
-        // All aggregations of nutritional values will be percentages in decimal form.
-        // They will already be multiplied with the weight, but they will not be rounded
+        // Nutritional values are percentages in decimal form
         public float Jod { get; set; }
         public float Jarn { get; set; }
         public float Kalcium { get; set; }
@@ -33,11 +29,10 @@
         public float D { get; set; }
         public float E { get; set; }
 
-        public FoodAggregation(int frontendId, string name, int weight)
+        public FoodProductDTO(int frontendId, string name)
         {
             FrontendId = frontendId;
             Name = name;
-            Weight = weight;
         }
     }
 }

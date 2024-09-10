@@ -5,8 +5,6 @@ using Polly;
 using System.Numerics;
 using TPApi.Food.DBModels;
 using TPApi.Food.APIModels;
-using System.Reflection.Metadata.Ecma335;
-using System.Diagnostics;
 
 namespace TPApi.Food
 {
@@ -58,7 +56,7 @@ namespace TPApi.Food
                 GenerateEmbeddingsWithDelay(names, 150, token)
             };
             var firstResponse = await Task.WhenAny(tasks);
-            // cts.Cancel();
+            cts.Cancel();
 
             EmbeddingCollection newEmbeddings = await firstResponse;
 
@@ -68,28 +66,26 @@ namespace TPApi.Food
 
         private async Task<EmbeddingCollection> GenerateEmbeddingsWithDelay(string[] names, int delay, CancellationToken token)
         {
-            if (delay > 0) await Task.Delay(delay);
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
+            if (delay > 0)
+            {
+                await Task.Delay(delay);
+            }
             EmbeddingClient client = new("text-embedding-3-large", _key);
-            var results = await client.GenerateEmbeddingsAsync(names, null, token);
-            stopwatch.Stop();
-            Console.WriteLine(stopwatch.ElapsedMilliseconds);
-            return results;
+            return await client.GenerateEmbeddingsAsync(names, null, token);
         }
 
-        public FoodAggregation[] GetAggregations(FoodInput[] foodInputs, float[][] newEmbeddings, 
+        public FoodProductDTO[] GetFoodProductDTOs(FoodInput[] foodInputs, float[][] newEmbeddings, 
                                                         FoodEmbedding[] storedEmbeddings, FoodProduct[] storedProducts)
         {
-            FoodAggregation[] aggregations = new FoodAggregation[foodInputs.Length];
+            FoodProductDTO[] foodProductDTOs = new FoodProductDTO[foodInputs.Length];
 
             for (int i = 0; i < foodInputs.Length; i++)
             {
-                FoodAggregation aggregation = new FoodAggregation(foodInputs[i].FrontendId, foodInputs[i].Name, foodInputs[i].Weight);
-                aggregations[i] = aggregation;
+                FoodProductDTO FoodProductDTO = new FoodProductDTO(foodInputs[i].FrontendId, foodInputs[i].Name);
+                foodProductDTOs[i] = FoodProductDTO;
             }
 
-            for (int i = 0; i < aggregations.Length; i++)
+            for (int i = 0; i < foodProductDTOs.Length; i++)
             {
                 (int, float)[] similarities = new (int, float)[storedProducts.Length];
 
@@ -102,7 +98,7 @@ namespace TPApi.Food
                 (int, float)[] topSimilarities = similarities.OrderByDescending(e => e.Item2).Take(_maxProductsPerAggregation).ToArray();
                 if (topSimilarities[0].Item2 < 0.4f)
                 {
-                    aggregations[i].Rejected = true;
+                    foodProductDTOs[i].Rejected = true;
                     continue;
                 }
                 int[] chosenProductIds = topSimilarities.Where(e => Math.Abs(e.Item2 - topSimilarities[0].Item2) < _maxSimilarityDistance).Select(e => e.Item1).ToArray();
@@ -111,28 +107,26 @@ namespace TPApi.Food
                 {
                     var product = storedProducts.Single(e => e.Id == id);
                     int numberOfProducts = chosenProductIds.Length;
-                    float weightFactor = aggregations[i].Weight > 0 ? aggregations[i].Weight/100f : product.Weight/100f;
-                    if (aggregations[i].Weight < 1) aggregations[i].Weight = product.Weight;
-                    aggregations[i].Jod += product.Jod / numberOfProducts * weightFactor / RecDailyIntake.Jod;
-                    aggregations[i].Jarn += product.Jarn / numberOfProducts * weightFactor / RecDailyIntake.Jarn;
-                    aggregations[i].Kalcium += product.Kalcium / numberOfProducts * weightFactor / RecDailyIntake.Kalcium;
-                    aggregations[i].Kalium += product.Kalium / numberOfProducts * weightFactor / RecDailyIntake.Kalium;
-                    aggregations[i].Magnesium += product.Magnesium / numberOfProducts * weightFactor / RecDailyIntake.Magnesium;
-                    aggregations[i].Selen += product.Selen / numberOfProducts * weightFactor / RecDailyIntake.Selen;
-                    aggregations[i].Zink += product.Zink / numberOfProducts * weightFactor / RecDailyIntake.Zink;
-                    aggregations[i].A += product.A / numberOfProducts * weightFactor / RecDailyIntake.A;
-                    aggregations[i].B1 += product.B1 / numberOfProducts * weightFactor / RecDailyIntake.B1;
-                    aggregations[i].B2 += product.B2 / numberOfProducts * weightFactor / RecDailyIntake.B2;
-                    aggregations[i].B3 += product.B3 / numberOfProducts * weightFactor / RecDailyIntake.B3;
-                    aggregations[i].B6 += product.B6 / numberOfProducts * weightFactor / RecDailyIntake.B6;
-                    aggregations[i].B9 += product.B9 / numberOfProducts * weightFactor / RecDailyIntake.B9;
-                    aggregations[i].B12 += product.B12 / numberOfProducts * weightFactor / RecDailyIntake.B12;
-                    aggregations[i].C += product.C / numberOfProducts * weightFactor / RecDailyIntake.C;
-                    aggregations[i].D += product.D / numberOfProducts * weightFactor / RecDailyIntake.D;
-                    aggregations[i].E += product.E / numberOfProducts * weightFactor / RecDailyIntake.E;
+                    foodProductDTOs[i].Jod += product.Jod / numberOfProducts / RecDailyIntake.Jod;
+                    foodProductDTOs[i].Jarn += product.Jarn / numberOfProducts / RecDailyIntake.Jarn;
+                    foodProductDTOs[i].Kalcium += product.Kalcium / numberOfProducts / RecDailyIntake.Kalcium;
+                    foodProductDTOs[i].Kalium += product.Kalium / numberOfProducts / RecDailyIntake.Kalium;
+                    foodProductDTOs[i].Magnesium += product.Magnesium / numberOfProducts / RecDailyIntake.Magnesium;
+                    foodProductDTOs[i].Selen += product.Selen / numberOfProducts / RecDailyIntake.Selen;
+                    foodProductDTOs[i].Zink += product.Zink / numberOfProducts / RecDailyIntake.Zink;
+                    foodProductDTOs[i].A += product.A / numberOfProducts / RecDailyIntake.A;
+                    foodProductDTOs[i].B1 += product.B1 / numberOfProducts / RecDailyIntake.B1;
+                    foodProductDTOs[i].B2 += product.B2 / numberOfProducts / RecDailyIntake.B2;
+                    foodProductDTOs[i].B3 += product.B3 / numberOfProducts / RecDailyIntake.B3;
+                    foodProductDTOs[i].B6 += product.B6 / numberOfProducts / RecDailyIntake.B6;
+                    foodProductDTOs[i].B9 += product.B9 / numberOfProducts / RecDailyIntake.B9;
+                    foodProductDTOs[i].B12 += product.B12 / numberOfProducts / RecDailyIntake.B12;
+                    foodProductDTOs[i].C += product.C / numberOfProducts / RecDailyIntake.C;
+                    foodProductDTOs[i].D += product.D / numberOfProducts / RecDailyIntake.D;
+                    foodProductDTOs[i].E += product.E / numberOfProducts / RecDailyIntake.E;
                 }
             }
-            return aggregations;
+            return foodProductDTOs;
         }
 
         private float ComputeDotProduct(float[] vectorA, float[] vectorB)

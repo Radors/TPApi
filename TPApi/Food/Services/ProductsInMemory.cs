@@ -32,7 +32,7 @@ namespace TPApi.Food.Services
                     {
                         MaxRetryAttempts = 3,
                     })
-                    .AddTimeout(TimeSpan.FromSeconds(3))
+                    .AddTimeout(TimeSpan.FromSeconds(20))
                     .Build();
 
                 await pipeline.ExecuteAsync(async token =>

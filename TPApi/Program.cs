@@ -44,8 +44,8 @@ app.MapPost("/food/processinput", async (FoodInput[] foodInputs) => {
     if (embeddingsInMemory.TryGetEmbeddings() is FoodEmbedding[] storedEmbeddings &&
         productsInMemory.TryGetProducts() is FoodProduct[] storedProducts)
     {
-        FoodAggregation[] aggregations = inputProcessor.GetAggregations(foodInputs, newEmbeddings, storedEmbeddings, storedProducts);
-        return Results.Ok(aggregations);
+        FoodProductDTO[] foodProductDTOs = inputProcessor.GetFoodProductDTOs(foodInputs, newEmbeddings, storedEmbeddings, storedProducts);
+        return Results.Ok(foodProductDTOs);
     }
     return Results.StatusCode(503);
 });
