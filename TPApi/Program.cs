@@ -53,7 +53,7 @@ app.MapPost("/food/processinput", async (FoodInput[] foodInputs) => {
     }
     return Results.StatusCode(503);
 });
-app.MapGet("/food/search", async (int frontendId, string query) =>
+app.MapGet("/food/search", (int frontendId, string query) =>
 {
     if (string.IsNullOrEmpty(query))
     {
