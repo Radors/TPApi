@@ -1,4 +1,6 @@
-﻿namespace TPApi.Food.APIModels
+﻿using TPApi.Food.DBModels;
+
+namespace TPApi.Food.APIModels
 {
     // Each instance of FoodProductDTO represents the response to one instance of FoodInput
     // When a request is received, one instance of FoodProductDTO is created for each search term and at first, only .FrontendId and .Name are populated.
@@ -6,9 +8,9 @@
     {
         // An Id that is only utilized by the frontend.
         public int FrontendId { get; set; }
-        // Original input Name
+        // The -actual- name for the real time search endpoint, and the searched input in the case of the embedding endpoint
         public string Name { get; set; }
-        // Rejected is set to true if highest similarity is below 0.4
+        // Rejected is set to true, by one of the endpoints, if highest similarity is below 0.4
         public bool Rejected { get; set; } = false;
         // Nutritional values are percentages in decimal form
         public float Jod { get; set; }
@@ -33,6 +35,28 @@
         {
             FrontendId = frontendId;
             Name = name;
+        }
+        public FoodProductDTO(int frontendId, string name, FoodProduct foodProduct)
+        {
+            FrontendId = frontendId;
+            Name = name;
+            Jod = (float)Math.Round(foodProduct.Jod / RecDailyIntake.Jod, 2);
+            Jarn = (float)Math.Round(foodProduct.Jarn / RecDailyIntake.Jarn, 2);
+            Kalcium = (float)Math.Round(foodProduct.Kalcium / RecDailyIntake.Kalcium, 2);
+            Kalium = (float)Math.Round(foodProduct.Kalium / RecDailyIntake.Kalium, 2);
+            Magnesium = (float)Math.Round(foodProduct.Magnesium / RecDailyIntake.Magnesium, 2);
+            Selen = (float)Math.Round(foodProduct.Selen / RecDailyIntake.Selen, 2);
+            Zink = (float)Math.Round(foodProduct.Zink / RecDailyIntake.Zink, 2);
+            A = (float)Math.Round(foodProduct.A / RecDailyIntake.A, 2);
+            B1 = (float)Math.Round(foodProduct.B1 / RecDailyIntake.B1, 2);
+            B2 = (float)Math.Round(foodProduct.B2 / RecDailyIntake.B2, 2);
+            B3 = (float)Math.Round(foodProduct.B3 / RecDailyIntake.B3, 2);
+            B6 = (float)Math.Round(foodProduct.B6 / RecDailyIntake.B6, 2);
+            B9 = (float)Math.Round(foodProduct.B9 / RecDailyIntake.B9, 2);
+            B12 = (float)Math.Round(foodProduct.B12 / RecDailyIntake.B12, 2);
+            C = (float)Math.Round(foodProduct.C / RecDailyIntake.C, 2);
+            D = (float)Math.Round(foodProduct.D / RecDailyIntake.D, 2);
+            E = (float)Math.Round(foodProduct.E / RecDailyIntake.E, 2);
         }
     }
 }
