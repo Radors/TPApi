@@ -10,7 +10,15 @@ using TPApi.Food.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 string azureSqlConnectionString = builder.Configuration["AZURE_SQL_CONNECTIONSTRING"] ?? throw new InvalidOperationException("Azure SQL connectionstring not found");
-builder.Services.AddDbContext<TPDbContext>(options => options.UseSqlServer(azureSqlConnectionString));
+builder.Services.AddDbContext<TPDbContext>(options =>
+    options.UseSqlServer(azureSqlConnectionString, sqlOptions =>
+    {
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 2,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null
+        );
+    }));
 builder.Services.AddSingleton<EmbeddingsInMemory>();
 builder.Services.AddSingleton<ProductsInMemory>();
 string vaultUrl = builder.Configuration["vaultUrl"] ?? throw new InvalidOperationException("Vault URL not found");
@@ -33,27 +41,31 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.MapPost("/food/processinput", async (FoodInput[] foodInputs) => {
-    if (foodInputs.Length == 0)
+app.MapGet("/food/search/embeddings", async (string query, int frontendId) =>
+{
+    if (string.IsNullOrEmpty(query))
     {
         return Results.BadRequest();
     }
-    foreach (var input in foodInputs)
-    {
-        if (string.IsNullOrEmpty(input.Name)) return Results.BadRequest();
-    }
 
-    float[][] newEmbeddings = await inputProcessor.GetEmbeddingsAsync(foodInputs);
+    float[] newEmbedding = await inputProcessor.GetEmbeddingAsync(query);
 
     if (embeddingsInMemory.TryGetEmbeddings() is FoodEmbedding[] storedEmbeddings &&
         productsInMemory.TryGetProducts() is FoodProduct[] storedProducts)
     {
-        FoodProductDTO[] foodProductDTOs = inputProcessor.GetFoodProductDTOs(foodInputs, newEmbeddings, storedEmbeddings, storedProducts);
-        return Results.Ok(foodProductDTOs);
+        FoodProductDTO[]? foodProductDTOs = inputProcessor.GetFoodProductDTOs(query, newEmbedding, storedEmbeddings, storedProducts, frontendId);
+        if (foodProductDTOs is FoodProductDTO[] results)
+        {
+            return Results.Ok(results); //Returning an array of completed DTOs right away, in order to -not- need another request for the nutrition later
+        }
+        else if (foodProductDTOs is null)
+        {
+            return Results.NoContent();
+        }
     }
     return Results.StatusCode(503);
 });
-app.MapGet("/food/search", (int frontendId, string query) =>
+app.MapGet("/food/search/basic", (string query, int frontendId) =>
 {
     if (string.IsNullOrEmpty(query))
     {
@@ -62,9 +74,9 @@ app.MapGet("/food/search", (int frontendId, string query) =>
     
     if (productsInMemory.TryGetProducts() is FoodProduct[] storedProducts)
     {
-        var products = storedProducts.Where(e => e.Name.Contains(query, StringComparison.OrdinalIgnoreCase)).OrderBy(e => e.Name.Length).Take(7);
-        FoodProductDTO[] foodProductDTOs = products.Select(product => new FoodProductDTO(frontendId, product.Name, product)).ToArray();
-        return Results.Ok(foodProductDTOs); //Returning an array of entire DTOs right away, in order to -not- need another request for the nutrition later
+        var products = storedProducts.Where(e => e.Name.Contains(query, StringComparison.OrdinalIgnoreCase)).OrderBy(e => e.Name.Length).Take(14);
+        FoodProductDTO[] foodProductDTOs = products.Select(product => new FoodProductDTO(query, frontendId, product.Name, product)).ToArray();
+        return Results.Ok(foodProductDTOs); //Returning an array of completed DTOs right away, in order to -not- need another request for the nutrition later
     }
     return Results.StatusCode(503);
 });

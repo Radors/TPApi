@@ -10,8 +10,8 @@ namespace TPApi.Food
 {
     public class InputProcessor
     {
-        private readonly float _maxSimilarityDistance = 0.1f;
-        private readonly int _maxProductsPerAggregation = 5;
+        private readonly float _maxSimilarityDistance = 0.25f;
+        private readonly int _maxProductsPerSearch = 14;
         private readonly string _key;
 
         public InputProcessor(SecretClient secretClient)
@@ -42,89 +42,69 @@ namespace TPApi.Food
             _key = key;
         }
 
-        public async Task<float[][]> GetEmbeddingsAsync(FoodInput[] foodInputs)
+        public async Task<float[]> GetEmbeddingAsync(string query)
         {
-            string[] names = foodInputs.Select(e => e.Name).ToArray();
-
             using var cts = new CancellationTokenSource();
             var token = cts.Token;
             var tasks = new[]
             {
-                GenerateEmbeddingsWithDelay(names, 0, token),
-                GenerateEmbeddingsWithDelay(names, 45, token),
-                GenerateEmbeddingsWithDelay(names, 95, token),
-                GenerateEmbeddingsWithDelay(names, 150, token)
+                GenerateEmbeddingWithDelay(query, 0, token),
+                GenerateEmbeddingWithDelay(query, 45, token),
+                GenerateEmbeddingWithDelay(query, 95, token),
             };
             var firstResponse = await Task.WhenAny(tasks);
             cts.Cancel();
 
-            EmbeddingCollection newEmbeddings = await firstResponse;
+            Embedding newEmbedding = await firstResponse;
 
-            float[][] vectors = newEmbeddings.Select(e => e.Vector.ToArray()).ToArray();
-            return vectors;
+            float[] vector = newEmbedding.Vector.ToArray();
+            return vector;
         }
 
-        private async Task<EmbeddingCollection> GenerateEmbeddingsWithDelay(string[] names, int delay, CancellationToken token)
+        private async Task<Embedding> GenerateEmbeddingWithDelay(string query, int delay, CancellationToken token)
         {
             if (delay > 0)
             {
                 await Task.Delay(delay);
             }
             EmbeddingClient client = new("text-embedding-3-large", _key);
-            return await client.GenerateEmbeddingsAsync(names, null, token);
+            return await client.GenerateEmbeddingAsync(query, null, token);
         }
 
-        public FoodProductDTO[] GetFoodProductDTOs(FoodInput[] foodInputs, float[][] newEmbeddings, 
-                                                        FoodEmbedding[] storedEmbeddings, FoodProduct[] storedProducts)
+        public FoodProductDTO[]? GetFoodProductDTOs(string query, float[] newEmbedding, FoodEmbedding[] storedEmbeddings, 
+                                                   FoodProduct[] storedProducts, int frontendId)
         {
-            FoodProductDTO[] foodProductDTOs = new FoodProductDTO[foodInputs.Length];
+            (int id, float similarity)[] similarities = new (int, float)[storedProducts.Length];
 
-            for (int i = 0; i < foodInputs.Length; i++)
+            for (int i = 0; i < storedEmbeddings.Length; i++)
             {
-                FoodProductDTO FoodProductDTO = new FoodProductDTO(foodInputs[i].FrontendId, foodInputs[i].Name);
-                foodProductDTOs[i] = FoodProductDTO;
+                float similarity = ComputeDotProduct(newEmbedding, storedEmbeddings[i].Vector);
+                similarities[i] = (storedEmbeddings[i].Id, similarity);
             }
 
-            for (int i = 0; i < foodProductDTOs.Length; i++)
+            (int id, float similarity)[] topSimilarities = similarities.OrderByDescending(e => e.Item2).Take(_maxProductsPerSearch).ToArray();
+
+            topSimilarities = topSimilarities.Where(e => e.similarity > 0.4f).ToArray();
+            if (topSimilarities.Length == 0)
             {
-                (int, float)[] similarities = new (int, float)[storedProducts.Length];
+                return null;
+            }
+            int[] chosenProductIds = topSimilarities.Where(e => Math.Abs(e.Item2 - topSimilarities[0].Item2) < _maxSimilarityDistance).Select(e => e.Item1).ToArray();
 
-                for (int j = 0; j < storedEmbeddings.Length; j++)
-                {
-                    float similarity = ComputeDotProduct(newEmbeddings[i], storedEmbeddings[j].Vector);
-                    similarities[j] = (storedEmbeddings[j].Id, similarity);
-                }
+            FoodProductDTO[] foodProductDTOs = new FoodProductDTO[chosenProductIds.Length];
 
-                (int, float)[] topSimilarities = similarities.OrderByDescending(e => e.Item2).Take(_maxProductsPerAggregation).ToArray();
-                if (topSimilarities[0].Item2 < 0.4f)
+            for (int i = 0; i < chosenProductIds.Length; i++)
+            {
+                var product = storedProducts.Single(e => e.Id == chosenProductIds[i]);
+                if (product is FoodProduct foodProduct)
                 {
-                    foodProductDTOs[i].Rejected = true;
-                    continue;
+                    FoodProductDTO foodProductDTO = new FoodProductDTO(query, frontendId, foodProduct.Name, foodProduct);
+                    foodProductDTOs[i] = foodProductDTO;
                 }
-                int[] chosenProductIds = topSimilarities.Where(e => Math.Abs(e.Item2 - topSimilarities[0].Item2) < _maxSimilarityDistance).Select(e => e.Item1).ToArray();
-
-                foreach (var id in chosenProductIds)
-                {
-                    var product = storedProducts.Single(e => e.Id == id);
-                    int numberOfProducts = chosenProductIds.Length;
-                    foodProductDTOs[i].Jod += product.Jod / numberOfProducts / RecDailyIntake.Jod;
-                    foodProductDTOs[i].Jarn += product.Jarn / numberOfProducts / RecDailyIntake.Jarn;
-                    foodProductDTOs[i].Kalcium += product.Kalcium / numberOfProducts / RecDailyIntake.Kalcium;
-                    foodProductDTOs[i].Kalium += product.Kalium / numberOfProducts / RecDailyIntake.Kalium;
-                    foodProductDTOs[i].Magnesium += product.Magnesium / numberOfProducts / RecDailyIntake.Magnesium;
-                    foodProductDTOs[i].Selen += product.Selen / numberOfProducts / RecDailyIntake.Selen;
-                    foodProductDTOs[i].Zink += product.Zink / numberOfProducts / RecDailyIntake.Zink;
-                    foodProductDTOs[i].A += product.A / numberOfProducts / RecDailyIntake.A;
-                    foodProductDTOs[i].B1 += product.B1 / numberOfProducts / RecDailyIntake.B1;
-                    foodProductDTOs[i].B2 += product.B2 / numberOfProducts / RecDailyIntake.B2;
-                    foodProductDTOs[i].B3 += product.B3 / numberOfProducts / RecDailyIntake.B3;
-                    foodProductDTOs[i].B6 += product.B6 / numberOfProducts / RecDailyIntake.B6;
-                    foodProductDTOs[i].B9 += product.B9 / numberOfProducts / RecDailyIntake.B9;
-                    foodProductDTOs[i].B12 += product.B12 / numberOfProducts / RecDailyIntake.B12;
-                    foodProductDTOs[i].C += product.C / numberOfProducts / RecDailyIntake.C;
-                    foodProductDTOs[i].D += product.D / numberOfProducts / RecDailyIntake.D;
-                    foodProductDTOs[i].E += product.E / numberOfProducts / RecDailyIntake.E;
-                }
+            }
+            if (foodProductDTOs.Length == 0)
+            {
+                return null;
             }
             return foodProductDTOs;
         }

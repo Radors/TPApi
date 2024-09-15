@@ -1,18 +1,18 @@
 ﻿using TPApi.Food.DBModels;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace TPApi.Food.APIModels
 {
-    // Each instance of FoodProductDTO represents the response to one instance of FoodInput
-    // When a request is received, one instance of FoodProductDTO is created for each search term and at first, only .FrontendId and .Name are populated.
     public class FoodProductDTO
     {
-        // An Id that is only utilized by the frontend.
+        // The query is received as part of any request to either of the search-endpoints
+        // All returned FoodProductDTOs, relating to one request, will share the same Query
+        public string Query { get; set; }
+        // An id that is only utilized by the frontend
         public int FrontendId { get; set; }
-        // The -actual- name for the real time search endpoint, and the searched input in the case of the embedding endpoint
+        // The name of the matched item
         public string Name { get; set; }
-        // Rejected is set to true, by one of the endpoints, if highest similarity is below 0.4
-        public bool Rejected { get; set; } = false;
-        // Nutritional values are percentages in decimal form
+        // Nutritional values are percentages in decimal point form
         public float Jod { get; set; }
         public float Jarn { get; set; }
         public float Kalcium { get; set; }
@@ -31,13 +31,9 @@ namespace TPApi.Food.APIModels
         public float D { get; set; }
         public float E { get; set; }
 
-        public FoodProductDTO(int frontendId, string name)
+        public FoodProductDTO(string query, int frontendId, string name, FoodProduct foodProduct)
         {
-            FrontendId = frontendId;
-            Name = name;
-        }
-        public FoodProductDTO(int frontendId, string name, FoodProduct foodProduct)
-        {
+            Query = query;
             FrontendId = frontendId;
             Name = name;
             Jod = (float)Math.Round(foodProduct.Jod / RecDailyIntake.Jod, 2);
