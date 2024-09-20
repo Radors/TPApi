@@ -71,7 +71,7 @@ namespace TPApi.Food
             return await client.GenerateEmbeddingAsync(query, null, token);
         }
 
-        public FoodProductDTO[]? GetFoodProductDTOs(string query, float[] newEmbedding, FoodEmbedding[] storedEmbeddings, 
+        public FoodProductDTO[] GetFoodProductDTOs(string query, float[] newEmbedding, FoodEmbedding[] storedEmbeddings, 
                                                    FoodProduct[] storedProducts, int frontendId)
         {
             (int id, float similarity)[] similarities = new (int, float)[storedProducts.Length];
@@ -87,7 +87,7 @@ namespace TPApi.Food
             topSimilarities = topSimilarities.Where(e => e.similarity > 0.4f).ToArray();
             if (topSimilarities.Length == 0)
             {
-                return null;
+                return Array.Empty<FoodProductDTO>();
             }
             int[] chosenProductIds = topSimilarities.Where(e => Math.Abs(e.Item2 - topSimilarities[0].Item2) < _maxSimilarityDistance).Select(e => e.Item1).ToArray();
 
@@ -101,10 +101,6 @@ namespace TPApi.Food
                     FoodProductDTO foodProductDTO = new FoodProductDTO(query, frontendId, foodProduct.Name, foodProduct);
                     foodProductDTOs[i] = foodProductDTO;
                 }
-            }
-            if (foodProductDTOs.Length == 0)
-            {
-                return null;
             }
             return foodProductDTOs;
         }

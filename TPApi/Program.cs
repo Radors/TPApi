@@ -1,6 +1,5 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TPApi.Data;
 using TPApi.Food;
@@ -53,15 +52,8 @@ app.MapGet("/food/search/embeddings", async (string query, int frontendId) =>
     if (embeddingsInMemory.TryGetEmbeddings() is FoodEmbedding[] storedEmbeddings &&
         productsInMemory.TryGetProducts() is FoodProduct[] storedProducts)
     {
-        FoodProductDTO[]? foodProductDTOs = inputProcessor.GetFoodProductDTOs(query, newEmbedding, storedEmbeddings, storedProducts, frontendId);
-        if (foodProductDTOs is FoodProductDTO[] results)
-        {
-            return Results.Ok(results); //Returning an array of completed DTOs right away, in order to -not- need another request for the nutrition later
-        }
-        else if (foodProductDTOs is null)
-        {
-            return Results.NoContent();
-        }
+        FoodProductDTO[] foodProductDTOs = inputProcessor.GetFoodProductDTOs(query, newEmbedding, storedEmbeddings, storedProducts, frontendId);
+        return Results.Ok(foodProductDTOs); //Returning an array of completed DTOs right away, in order to -not- need another request for the nutrition later
     }
     return Results.StatusCode(503);
 });
