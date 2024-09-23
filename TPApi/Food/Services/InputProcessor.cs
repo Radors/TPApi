@@ -11,7 +11,7 @@ namespace TPApi.Food
     public class InputProcessor
     {
         private readonly float _maxSimilarityDistance = 0.25f;
-        private readonly int _maxProductsPerSearch = 14;
+        private readonly int _maxProductsPerSearch = 16;
         private readonly string _key;
 
         public InputProcessor(SecretClient secretClient)
