@@ -1,15 +1,18 @@
-#### TPApi is the backend for MatPerspektiv.se
+## TPApi
 
-This API listens at two separate endpoints:
+TPApi is the backend for MatPerspektiv.se
+
+There are two separate endpoints:
 
 #### /food/search/basic  
 • Very simple endpoint that does not actively engage any external dependencies nor any meaningful computational workload.  
 
 #### /food/search/embeddings  
 • Utilizes Embeddings from a state-of-the-art model to compare semantic meaning.  
-• This endpoint acts as a slower "backup" and finds results which have **not** already been found by the basic search.  
+• This endpoint acts as a slower "backup" and finds results which have not already been found by the basic search.  
 
-#### Responsibilities related to the endpoint "/food/search/embeddings":  
+--- 
+#### Responsibilities of /food/search/embeddings:  
 1. Accept request containing a search query.  
 2. Send request to OpenAIs Large Embedding Model 3 to transform the query into a vector.  
    This vector is an array of 3072 floats.  
@@ -18,9 +21,9 @@ This API listens at two separate endpoints:
    Because the vectors returned by OpenAI are normalized, the dot product is therefore equivalent to cosine similarity.  
 4. Select up to X top results within a maximum of Y similarity distance.  
 5. Create FoodProductDTO instances for each of the top results with the actual nutritional values.  
-6. Finally return the results. (The redundant hits already found by the basic endpoint are then excluded by the frontend.)  
-
-
+6. Finally return the results. (Any redundant hits already found by the basic endpoint are then excluded by the frontend.)  
+  
+---   
 #### Project Structure  
 
 ##### Minimal API endpoints are configured in Program.cs:  
