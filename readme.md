@@ -10,7 +10,7 @@ There are two endpoints:
 The second endpoint compares embedding vectors, in order to search based on semantic meaning.  
 This acts as a slower "backup" and finds some results which have not already been found by the basic search. 
 
-The model used is the OpenAi Large Embedding Model 3, because of its competitive multi language support, including Swedish.
+The model used is the OpenAi Large Embedding Model 3, because of its competitive multi language support.
 
 ## Programming
 
